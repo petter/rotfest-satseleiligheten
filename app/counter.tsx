@@ -20,8 +20,19 @@ export async function Counter() {
   }
 
   return (
-    <p>
-      Besøkende: <strong>{count}</strong>
-    </p>
+    <div className="retro-counter fixed bottom-0 right-0 m-4">
+      <div className="counter-label">Besøkende</div>
+      <div className="digital-display">
+        {count
+          .toString()
+          .padStart(6, "0")
+          .split("")
+          .map((digit, index) => (
+            <div key={index} className="digit">
+              {digit}
+            </div>
+          ))}
+      </div>
+    </div>
   );
 }
