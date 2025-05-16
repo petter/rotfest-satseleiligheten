@@ -1,23 +1,31 @@
-import { Redis } from "@upstash/redis";
+"use client";
 
-let redis: Redis | null = null;
+import { useEffect, useState } from "react";
 
-try {
-  redis = Redis.fromEnv();
-} catch {
-  console.warn("Redis configuration not found, counter will return 0");
+interface Props {
+  defaultValue: number;
 }
 
-export async function Counter() {
-  let count = 0;
+export function Counter({ defaultValue }: Props) {
+  const [count, setCount] = useState(defaultValue);
 
-  try {
-    if (redis) {
-      count = await redis.incr("visits");
-    }
-  } catch (error) {
-    console.error("Failed to increment counter:", error);
-  }
+  useEffect(() => {
+    const eventSource = new EventSource("/api/visits");
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setCount(data.count);
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("EventSource failed:", error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   return (
     <div className="retro-counter fixed bottom-0 right-0 m-4">
