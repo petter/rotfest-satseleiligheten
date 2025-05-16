@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 interface Props {
@@ -9,6 +9,9 @@ interface Props {
 
 export function Counter({ defaultValue }: Props) {
   const [count, setCount] = useState(defaultValue);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [direction, setDirection] = useState({ x: 1, y: 1 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const eventSource = new EventSource("/api/visits");
@@ -28,8 +31,64 @@ export function Counter({ defaultValue }: Props) {
     };
   }, []);
 
+  useEffect(() => {
+    const moveCounter = () => {
+      if (!containerRef.current) return;
+
+      const container = containerRef.current;
+      const rect = container.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width;
+      const maxY = window.innerHeight - rect.height;
+
+      setPosition((prev) => {
+        const newX = prev.x + 2 * direction.x;
+        const newY = prev.y + 1 * direction.y;
+
+        // Check and handle X boundaries
+        if (newX >= maxX) {
+          setDirection((d) => ({ ...d, x: -1 }));
+          return { ...prev, x: maxX };
+        }
+        if (newX <= 0) {
+          setDirection((d) => ({ ...d, x: 1 }));
+          return { ...prev, x: 0 };
+        }
+
+        // Check and handle Y boundaries
+        if (newY >= maxY) {
+          setDirection((d) => ({ ...d, y: -1 }));
+          return { ...prev, y: maxY };
+        }
+        if (newY <= 0) {
+          setDirection((d) => ({ ...d, y: 1 }));
+          return { ...prev, y: 0 };
+        }
+
+        return { x: newX, y: newY };
+      });
+    };
+
+    const interval = setInterval(moveCounter, 16); // ~60fps
+    return () => clearInterval(interval);
+  }, [direction]);
+
   return (
-    <div className="retro-counter fixed bottom-0 right-0 m-4">
+    <motion.div
+      ref={containerRef}
+      className="retro-counter fixed m-4"
+      animate={{
+        x: position.x,
+        y: position.y,
+      }}
+      transition={{
+        duration: 0.016,
+        ease: "linear",
+      }}
+      style={{
+        position: "fixed",
+        zIndex: 1000,
+      }}
+    >
       <div className="counter-label">Besøkende</div>
       <div className="digital-display">
         {count
@@ -52,6 +111,6 @@ export function Counter({ defaultValue }: Props) {
             </div>
           ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
