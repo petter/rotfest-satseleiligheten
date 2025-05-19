@@ -20,6 +20,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Satseleiligheten",
   description: "Rotfests råeste leilighet!",
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+    shortcut: '/icon.png',
+  },
 };
 
 export default async function RootLayout({
