@@ -14,20 +14,49 @@ export function Counter({ defaultValue }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/visits");
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    
+    const connectEventSource = () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+      
+      eventSource = new EventSource("/api/visits");
 
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setCount(data.count);
-    };
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (typeof data.count === 'number') {
+            setCount(data.count);
+          }
+        } catch (error) {
+          console.error("Failed to parse SSE data:", error);
+        }
+      };
 
-    eventSource.onerror = (error) => {
-      console.error("EventSource failed:", error);
-      eventSource.close();
+      eventSource.onerror = (error) => {
+        console.error("EventSource failed:", error);
+        eventSource?.close();
+        eventSource = null;
+        
+        // Try to reconnect after 3 seconds
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+        }
+        reconnectTimeout = setTimeout(connectEventSource, 3000);
+      };
     };
+    
+    connectEventSource();
 
     return () => {
-      eventSource.close();
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
     };
   }, []);
 

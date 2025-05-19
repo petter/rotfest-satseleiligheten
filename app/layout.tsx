@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Counter } from "./counter";
 import { Redis } from "@upstash/redis";
-import { FloatingImage } from "./components/floating-image";
+import { AvantGardeMenu } from "./components/avant-garde-menu";
+import { AppProvider } from "./context/app-context";
+import { FloatingElements } from "./components/floating-elements";
 
 import "./globals.css";
 
@@ -10,7 +11,10 @@ import "./globals.css";
 let redis: Redis | null = null;
 try {
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    redis = Redis.fromEnv();
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN
+    });
   } else {
     console.warn("Upstash Redis environment variables not found. Using fallback values.");
   }
@@ -61,24 +65,11 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Counter defaultValue={count} />
-        <FloatingImage 
-          src="/gutta.jpg" 
-          alt="Gutta i aksjon" 
-          width={400} 
-          height={400} 
-          speed={{ x: 1, y: 3 }}
-          initialPosition={{ x: 150, y: 150 }}
-        />
-         <FloatingImage 
-          src="/gutta2.jpg" 
-          alt="Gutta i aksjon" 
-          width={400} 
-          height={400} 
-          speed={{ x: 3, y: 1 }}
-          initialPosition={{ x: 300, y: 300 }}
-        />
-        {children}
+        <AppProvider>
+          <AvantGardeMenu />
+          <FloatingElements count={count} />
+          {children}
+        </AppProvider>
       </body>
     </html>
   );
