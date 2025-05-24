@@ -4,6 +4,7 @@ import { Redis } from "@upstash/redis";
 import { AvantGardeMenu } from "./components/avant-garde-menu";
 import { AppProvider } from "./context/app-context";
 import { FloatingElements } from "./components/floating-elements";
+import { AudioPlayer } from "./components/audio-player";
 
 import "./globals.css";
 
@@ -68,6 +69,7 @@ export default async function RootLayout({
         <AppProvider>
           <AvantGardeMenu />
           <FloatingElements count={count} />
+          <AudioPlayer />
           {children}
         </AppProvider>
       </body>
